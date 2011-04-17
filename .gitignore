@@ -2,4 +2,4 @@ out/
 *.iws
 tests/
 *~
-
+.DS_Store/
