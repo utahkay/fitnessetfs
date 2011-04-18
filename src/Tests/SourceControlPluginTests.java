@@ -21,12 +21,14 @@ public class SourceControlPluginTests {
 	
     TfRunner fakeTfRunner = Mockito.mock(TfRunner.class);
     FileSystem fakeFileSystem = Mockito.mock(FileSystem.class);
+    ConsoleOutputter fakeOutputter = Mockito.mock(ConsoleOutputter.class);
 	
 	@Before
 	public void setup()
 	{
         SourceControlPlugin.setTfRunner(fakeTfRunner);
         SourceControlPlugin.setFileSystem(fakeFileSystem);
+        SourceControlPlugin.setOutputter(fakeOutputter);
 	}
 
 	@Test

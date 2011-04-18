@@ -12,40 +12,53 @@ public class SourceControlPlugin {
 	 * •cmDelete(directory, payload) is called just after the directory defining a page has been deleted.
 	 */
 
-	static String rootPath = "";
-	static TfRunner tfRunner = new TfRunner();
-    static FileSystem fileSystem = new FileSystem();
+	private static String rootPath = "";
+	private static TfRunner tfRunner = new TfRunner();
+    private static FileSystem fileSystem = new FileSystem();
+    private static ConsoleOutputter outputter = new ConsoleOutputter();
 
-    public static void setTfRunner(TfRunner runner) {
-		tfRunner = runner;
+    public static void setTfRunner(TfRunner tfRunner) {
+		SourceControlPlugin.tfRunner = tfRunner;
 	}
 	
     public static void setFileSystem(FileSystem fileSystem) {
         SourceControlPlugin.fileSystem = fileSystem;        
     }
 
+    public static void setOutputter(ConsoleOutputter outputter) {
+        SourceControlPlugin.outputter = outputter;
+    }
+
 	public static void cmEdit(String file, String payload) {
+        outputter.output("cmEdit");
 		parsePayload(payload);
 		String fullPath = buildPath(payload, file);
 		if (fileSystem.fileExists(fullPath) && !fileSystem.isWritable(fullPath))
 			tf("checkout", fullPath);
+        outputter.output("");
 	}
 
     public static void cmUpdate(String file, String payload) throws IOException {
+        outputter.output("cmUpdate");
         parsePayload(payload);
         String fullPath = buildPath(payload, file);
         if (!fileSystem.fileExists(fullPath))
             tf("add", fullPath);
+        outputter.output("");
     }
 
 	public static void cmPreDelete(String file, String payload) throws IOException {
+        outputter.output("cmPreDelete");
+        outputter.output("");
 	}
 
 	public static void cmDelete(String file, String payload) throws IOException {
+        outputter.output("cmDelete");
 		parsePayload(payload);
 		String fullPath = buildPath(payload, file);
         if (tfFileExists(fullPath))
 			tf("delete", fullPath);
+        outputter.output("");
 	}
 
 	private static void parsePayload(String payload) {
@@ -56,6 +69,7 @@ public class SourceControlPlugin {
 		boolean output = parameters.size() > 3 ? !parameters.get(3).equals("nooutput") : true;
 		
 		tfRunner.setPathToTfCommand(pathToTfCommand);
+        outputter.setOutput(output);
         tfRunner.setOutput(output);
         fileSystem.setOutput(output);
 	}
