@@ -24,8 +24,7 @@ public class SourceControlPluginTests {
     ConsoleOutputter fakeOutputter = Mockito.mock(ConsoleOutputter.class);
 	
 	@Before
-	public void setup()
-	{
+	public void setup()	{
         SourceControlPlugin.setTfRunner(fakeTfRunner);
         SourceControlPlugin.setFileSystem(fakeFileSystem);
         SourceControlPlugin.setOutputter(fakeOutputter);
@@ -95,11 +94,18 @@ public class SourceControlPluginTests {
 	}
 
     @Test
-    public void cmDeleteCallsUndoWhenFileIsInPendingChanges() throws IOException {
+    public void cmPreDeleteCallsUndoWhenFileIsInPendingChanges() throws IOException {
         setFileInPendingChanges(true);
-        SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
+        SourceControlPlugin.cmPreDelete(EXPECTED_FILE, PAYLOAD);
         verify(fakeTfRunner).execute("status", EXPECTED_OUTPATH);
-        verify (fakeTfRunner).execute("undo /recursive", EXPECTED_OUTPATH);
+        verify(fakeTfRunner).execute("undo /recursive", EXPECTED_OUTPATH);
+    }
+
+    @Test
+    public void cmPreDeleteDoesNothingWhenFileIsNotInPendingChanges() throws IOException {
+        setFileInPendingChanges(false);
+        SourceControlPlugin.cmPreDelete(EXPECTED_FILE, PAYLOAD);
+        verify(fakeTfRunner, never()).execute(contains("undo"), anyString());
     }
 
     @Test
@@ -111,9 +117,8 @@ public class SourceControlPluginTests {
     }
 
     @Test
-	public void cmDeleteDoesNothingWhenFileDoesNotExistInTfsAndIsNotInPendingChanges() throws IOException	{
+	public void cmDeleteDoesNothingWhenFileDoesNotExistInTfs() throws IOException	{
         setFileExistsInTfs(false);
-        setFileInPendingChanges(false);
         SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
         verify(fakeTfRunner, never()).execute(contains("delete"), anyString());
         verify(fakeTfRunner, never()).execute(contains("undo"), anyString());
