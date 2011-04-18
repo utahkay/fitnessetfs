@@ -7,14 +7,15 @@ import org.junit.Ignore;
 import fitnesseTfs.TfRunner;
 
 
-public class IntegratedTfRunnerTests {
+public class IntegrationTests {
     @Ignore
 	@Test
 	public void canGetWorkspaceOutput()
 	{
 		TfRunner runner = new TfRunner();
-		runner.setPath("C:\\program files\\Microsoft Visual Studio 9.0\\Common7\\IDE\\");
+		runner.setPathToTfCommand("C:\\program files\\Microsoft Visual Studio 9.0\\Common7\\IDE\\");
 		String output = runner.execute("WORKSPACES", "");
 		Assert.assertTrue(output.contains("LAPTOP-LEA-07"));
 	}
+
 }

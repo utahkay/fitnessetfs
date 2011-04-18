@@ -13,71 +13,60 @@ public class SourceControlPlugin {
 	 */
 
 	static String rootPath = "";
-	static String path = "";
-	static boolean fileExists = false;
-	static boolean output = true;
 	static TfRunner tfRunner = new TfRunner();
-	static ConsoleOutputter outputter = new ConsoleOutputter();
-	
-	public static void setTfRunner(TfRunner runner)
-	{
+    static FileSystem fileSystem = new FileSystem();
+
+    public static void setTfRunner(TfRunner runner) {
 		tfRunner = runner;
 	}
 	
-	public static void setOutputter(ConsoleOutputter outputter)
-	{
-		SourceControlPlugin.outputter = outputter;
-	}
-	
+    public static void setFileSystem(FileSystem fileSystem) {
+        SourceControlPlugin.fileSystem = fileSystem;        
+    }
+
 	public static void cmEdit(String file, String payload) {
 		parsePayload(payload);
 		String fullPath = buildPath(payload, file);
-		checkFileExists(fullPath); 
-		if (fileExists)
+		if (fileSystem.fileExists(fullPath) && !fileSystem.isWritable(fullPath))
 			tf("checkout", fullPath);
 	}
 
     public static void cmUpdate(String file, String payload) throws IOException {
         parsePayload(payload);
         String fullPath = buildPath(payload, file);
-        if (!fileExists)
+        if (!fileSystem.fileExists(fullPath))
             tf("add", fullPath);
     }
 
-	public static void cmPreDelete(String file, String payload)
-			throws IOException {
+	public static void cmPreDelete(String file, String payload) throws IOException {
 	}
 
 	public static void cmDelete(String file, String payload) throws IOException {
 		parsePayload(payload);
 		String fullPath = buildPath(payload, file);
-		checkFileExists(fullPath);
-		if (fileExists)
+        if (tfFileExists(fullPath))
 			tf("delete", fullPath);
 	}
 
-	private static void parsePayload(String payload)
-	{
+	private static void parsePayload(String payload) {
 		List<String> parameters = StringSplitter.split(payload);
 		
 		rootPath = parameters.get(1);
-		path = parameters.get(2);
-		output = parameters.size() > 3 ? !parameters.get(3).equals("nooutput") : true;
+		String pathToTfCommand = parameters.get(2);
+		boolean output = parameters.size() > 3 ? !parameters.get(3).equals("nooutput") : true;
 		
-		tfRunner.setPath(path);
+		tfRunner.setPathToTfCommand(pathToTfCommand);
+        tfRunner.setOutput(output);
+        fileSystem.setOutput(output);
 	}
 	
-	private static void checkFileExists(String fullPath) {
+	public static boolean tfFileExists(String fullPath) {
 		String existsOutput = tf("dir", fullPath);
-		fileExists = existsOutput != null && existsOutput.contains("1 item");
+		return existsOutput != null && existsOutput.contains("1 item");
 	}
 
-	private static String tf(String command, String path)
-	{
-		if (output) outputter.output(command + " " + path);
-		String result = tfRunner.execute(command, path);
-		if (output) outputter.output(result);
-		return result;
+	private static String tf(String command, String path) {
+        return tfRunner.execute(command, path);
 	}
 	
 	private static String buildPath(String payload, String fileName) {
@@ -88,4 +77,5 @@ public class SourceControlPlugin {
 		fileName = fileName.replace(".\\", "");
 		return rootPath + fileName;
 	}
+
 }

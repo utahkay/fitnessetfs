@@ -6,18 +6,22 @@ import java.io.InputStreamReader;
 
 public class TfRunner {
 	
-	String path;
-	
-	public TfRunner()
-	{
-	}
-	
-	public void setPath(String path) {
+	private String path;
+    private ConsoleOutputter outputter;
+
+	public void setPathToTfCommand(String path) {
 		this.path = path;
 	}
 
+    public void setOutputter(ConsoleOutputter outputter) {
+        this.outputter = outputter;
+    }
+
 	public String execute(String option, String file) {
-		return execute(path + "tf.exe " + option + " /noprompt " + file);
+        outputter.output("tf.exe " + option + " " + file);
+		String result = execute(path + "tf.exe " + option + " /noprompt " + file);
+        outputter.output(result);
+        return result;
 	}
 	
 	private static String execute(String command) {
@@ -48,4 +52,9 @@ public class TfRunner {
 		input.close();
 		return result;
 	}
+
+    public void setOutput(boolean output) {
+        if (outputter != null)
+            outputter.setOutput(output);
+    }
 }

@@ -19,92 +19,118 @@ public class SourceControlPluginTests {
 	private static final String PAYLOAD = "fitnesseTfs.SourceControlPlugin " + EXPECTED_ROOT + " \"" + TFS_PATH + "\"";
 	private static final String PAYLOAD_NOOUTPUT = PAYLOAD + " nooutput";
 	
-	ConsoleOutputter fakeOutputter = Mockito.mock(ConsoleOutputter.class);
     TfRunner fakeTfRunner = Mockito.mock(TfRunner.class);
+    FileSystem fakeFileSystem = Mockito.mock(FileSystem.class);
 	
 	@Before
 	public void setup()
 	{
         SourceControlPlugin.setTfRunner(fakeTfRunner);
-		SourceControlPlugin.setOutputter(fakeOutputter);
+        SourceControlPlugin.setFileSystem(fakeFileSystem);
 	}
 
 	@Test
-	public void cmEditCallsSetPathOnRunner() throws IOException
-	{
+	public void cmEditCallsSetPathOnRunner() throws IOException	{
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-        verify(fakeTfRunner).setPath(TFS_PATH);
+        verify(fakeTfRunner).setPathToTfCommand(TFS_PATH);
 	}
-	
-	@Test
-	public void cmEditCallsDirWhenFileIsNew() throws IOException
-	{
-        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-        verify(fakeTfRunner).execute("dir", EXPECTED_OUTPATH);
+
+    @Test
+    public void cmEditCallsSetOutputOnRunner() {
+        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD_NOOUTPUT);
+        verify(fakeTfRunner).setOutput(false);
     }
-	
+
+    @Test
+    public void cmEditCallsSetOutputOnFileSystem() {
+        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD_NOOUTPUT);
+        verify(fakeFileSystem).setOutput(false);
+    }
+
+    @Test
+    public void cmEditBuildsPathAndStripsRelativePath() {
+        SourceControlPlugin.cmEdit(EXPECTED_FILE_RELATIVE, PAYLOAD);
+        verify(fakeFileSystem).fileExists(EXPECTED_OUTPATH);
+    }
+
 	@Test
-	public void cmEditCallsDirAndCheckoutWhenFileExists() throws IOException
-	{
-        when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
+	public void cmEditDoesNothingWhenFileDoesNotExist() throws IOException {
+        setFileExists(false);
+
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-        verify(fakeTfRunner).execute("dir", EXPECTED_OUTPATH);
+
+        verify(fakeTfRunner, never()).execute(anyString(), anyString());
+    }
+
+    @Test
+	public void cmEditDoesNothingWhenFileExistsAndIsWritable() throws IOException {
+        setFileExists(true);
+        setFileWritable(true);
+
+        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
+
+        verify(fakeTfRunner, never()).execute(anyString(), anyString());
+    }
+
+    @Test
+    public void cmEditCallsCheckoutWhenFileExistsAndIsNotWritable() throws IOException {
+        setFileExists(true);
+        setFileWritable(false);
+
+        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
+
         verify(fakeTfRunner).execute("checkout", EXPECTED_OUTPATH);
     }
 
 	@Test
-	public void cmUpdateCallsAddWhenFileIsNew() throws IOException
-	{
+	public void cmUpdateCallsAddWhenFileDoesNotExist() throws IOException {
+        setFileExists(false);
+
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
         SourceControlPlugin.cmUpdate(EXPECTED_FILE, PAYLOAD);
+
         verify(fakeTfRunner).execute("add", EXPECTED_OUTPATH);
     }
-	
-	@Test
-	public void cmUpdateDoesNothingWhenFileExists() throws IOException
-	{
-        when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
+
+    @Test
+	public void cmUpdateDoesNothingWhenFileExists() throws IOException {
+        setFileExists(true);
+
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
         SourceControlPlugin.cmUpdate(EXPECTED_FILE, PAYLOAD);
+
         verify(fakeTfRunner, never()).execute(eq("add"), anyString());
-        verify(fakeTfRunner, never()).execute(eq("checkin"), anyString());
 	}
 	
 	@Test
-	public void cmDeleteCallsDeleteWhenFileExists() throws IOException
-	{
-        when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
+	public void cmDeleteCallsDeleteWhenFileExistsInTfs() throws IOException	{
+        setFileExistsInTfs(true);
+
         SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
+
         verify(fakeTfRunner).execute("delete", EXPECTED_OUTPATH);
     }
 
 	@Test
-	public void cmDeleteDoesNotCallDeleteWhenFileDoesNotExist() throws IOException
-	{
+	public void cmDeleteDoesNotCallDeleteWhenFileDoesNotExistInTfs() throws IOException	{
+        setFileExistsInTfs(false);
+
         SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
-        verify(fakeTfRunner).execute("dir", EXPECTED_OUTPATH);
+
         verify(fakeTfRunner, never()).execute(eq("delete"), anyString());
 	}
 	
-	@Test
-	public void cmEditOutputsWithoutNooutputInPayload()
-	{
-        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-        verify(fakeOutputter).output("dir " + EXPECTED_OUTPATH);
-	}
-	
-	@Test
-	public void cmEditDoesntOutputWithNooutputInPayload()
-	{
-		SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD_NOOUTPUT);
-        verify(fakeOutputter, never()).output(anyString());
-	}
+    private void setFileExists(boolean exists) {
+        when(fakeFileSystem.fileExists(anyString())).thenReturn(exists);
+    }
 
-    @Test
-    public void cmEditStripsRelativePath()
-    {
-        SourceControlPlugin.cmEdit(EXPECTED_FILE_RELATIVE, PAYLOAD);
-        verify(fakeTfRunner).execute("dir", EXPECTED_OUTPATH);
+    private void setFileWritable(boolean writable) {
+        when (fakeFileSystem.isWritable(anyString())).thenReturn(writable);
+    }
+
+    private void setFileExistsInTfs(boolean exists) {
+        if (exists)
+            when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
     }
 
 }
