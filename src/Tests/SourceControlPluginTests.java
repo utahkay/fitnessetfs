@@ -97,7 +97,7 @@ public class SourceControlPluginTests {
     public void cmPreDeleteCallsUndoWhenFileIsInPendingChanges() throws IOException {
         setFileInPendingChanges(true);
         SourceControlPlugin.cmPreDelete(EXPECTED_FILE, PAYLOAD);
-        verify(fakeTfRunner).execute("status", EXPECTED_OUTPATH);
+        verify(fakeTfRunner).execute("status /recursive", EXPECTED_OUTPATH);
         verify(fakeTfRunner).execute("undo /recursive", EXPECTED_OUTPATH);
     }
 
@@ -139,7 +139,7 @@ public class SourceControlPluginTests {
 
     private void setFileInPendingChanges(boolean inPendingChanges) {
         if (inPendingChanges)
-            when(fakeTfRunner.execute("status", EXPECTED_OUTPATH)).thenReturn("1 change(s)");
+            when(fakeTfRunner.execute(contains("status"), eq(EXPECTED_OUTPATH))).thenReturn("2 change(s)");
     }
 
 }

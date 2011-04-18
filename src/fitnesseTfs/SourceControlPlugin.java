@@ -92,8 +92,8 @@ public class SourceControlPlugin {
 	}
 
     private static boolean tfInPendingChanges(String fullPath) {
-        String pendingOutput = tf("status", fullPath);
-        return pendingOutput !=  null && pendingOutput.contains("1 change(s)");
+        String pendingOutput = tf("status /recursive", fullPath);
+        return pendingOutput !=  null && pendingOutput.contains(" change(s)");
     }
 
 	private static String tf(String command, String path) {
