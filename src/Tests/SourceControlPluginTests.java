@@ -59,9 +59,7 @@ public class SourceControlPluginTests {
 	@Test
 	public void cmEditDoesNothingWhenFileDoesNotExist() throws IOException {
         setFileExists(false);
-
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-
         verify(fakeTfRunner, never()).execute(anyString(), anyString());
     }
 
@@ -69,9 +67,7 @@ public class SourceControlPluginTests {
 	public void cmEditDoesNothingWhenFileExistsAndIsWritable() throws IOException {
         setFileExists(true);
         setFileWritable(true);
-
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-
         verify(fakeTfRunner, never()).execute(anyString(), anyString());
     }
 
@@ -79,9 +75,7 @@ public class SourceControlPluginTests {
     public void cmEditCallsCheckoutWhenFileExistsAndIsNotWritable() throws IOException {
         setFileExists(true);
         setFileWritable(false);
-
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
-
         verify(fakeTfRunner).execute("checkout", EXPECTED_OUTPATH);
     }
 
@@ -100,22 +94,29 @@ public class SourceControlPluginTests {
         verify(fakeTfRunner, never()).execute(eq("add"), anyString());
 	}
 
-	@Test
-	public void cmDeleteCallsDeleteWhenFileExistsInTfs() throws IOException	{
-        setFileExistsInTfs(true);
-
+    @Test
+    public void cmDeleteCallsUndoWhenFileIsInPendingChanges() throws IOException {
+        setFileInPendingChanges(true);
         SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
-
-        verify(fakeTfRunner).execute("delete", EXPECTED_OUTPATH);
+        verify(fakeTfRunner).execute("status", EXPECTED_OUTPATH);
+        verify (fakeTfRunner).execute("undo /recursive", EXPECTED_OUTPATH);
     }
 
-	@Test
-	public void cmDeleteDoesNotCallDeleteWhenFileDoesNotExistInTfs() throws IOException	{
-        setFileExistsInTfs(false);
-
+    @Test
+    public void cmDeleteCallsDeleteWhenFileExistsInTfs() throws IOException	{
+        setFileExistsInTfs(true);
         SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
+        verify(fakeTfRunner).execute("dir", EXPECTED_OUTPATH);
+        verify(fakeTfRunner).execute("delete /recursive", EXPECTED_OUTPATH);
+    }
 
-        verify(fakeTfRunner, never()).execute(eq("delete"), anyString());
+    @Test
+	public void cmDeleteDoesNothingWhenFileDoesNotExistInTfsAndIsNotInPendingChanges() throws IOException	{
+        setFileExistsInTfs(false);
+        setFileInPendingChanges(false);
+        SourceControlPlugin.cmDelete(EXPECTED_FILE, PAYLOAD);
+        verify(fakeTfRunner, never()).execute(contains("delete"), anyString());
+        verify(fakeTfRunner, never()).execute(contains("undo"), anyString());
 	}
 	
     private void setFileExists(boolean exists) {
@@ -129,6 +130,11 @@ public class SourceControlPluginTests {
     private void setFileExistsInTfs(boolean exists) {
         if (exists)
             when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
+    }
+
+    private void setFileInPendingChanges(boolean inPendingChanges) {
+        if (inPendingChanges)
+            when(fakeTfRunner.execute("status", EXPECTED_OUTPATH)).thenReturn("1 change(s)");
     }
 
 }

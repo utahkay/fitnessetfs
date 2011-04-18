@@ -64,8 +64,10 @@ public class SourceControlPlugin {
         outputter.output("cmDelete");
 		parsePayload(payload);
 		String fullPath = buildPath(payload, file);
+        if (tfInPendingChanges(fullPath))
+            tf("undo /recursive", fullPath);
         if (tfFileExists(fullPath))
-			tf("delete", fullPath);
+			tf("delete /recursive", fullPath);
         outputter.output("");
 	}
 
@@ -82,10 +84,15 @@ public class SourceControlPlugin {
         fileSystem.setOutput(output);
 	}
 	
-	public static boolean tfFileExists(String fullPath) {
+	private static boolean tfFileExists(String fullPath) {
 		String existsOutput = tf("dir", fullPath);
 		return existsOutput != null && existsOutput.contains("1 item");
 	}
+
+    private static boolean tfInPendingChanges(String fullPath) {
+        String pendingOutput = tf("status", fullPath);
+        return pendingOutput !=  null && pendingOutput.contains("1 change");
+    }
 
 	private static String tf(String command, String path) {
         return tfRunner.execute(command, path);
