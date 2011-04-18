@@ -129,7 +129,7 @@ public class SourceControlPluginTests {
 
     private void setFileExistsInTfs(boolean exists) {
         if (exists)
-            when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("1 item");
+            when(fakeTfRunner.execute("dir", EXPECTED_OUTPATH)).thenReturn("2 item(s)");
     }
 
     private void setFileInPendingChanges(boolean inPendingChanges) {

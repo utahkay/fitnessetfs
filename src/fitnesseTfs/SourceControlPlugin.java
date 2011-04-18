@@ -86,12 +86,12 @@ public class SourceControlPlugin {
 	
 	private static boolean tfFileExists(String fullPath) {
 		String existsOutput = tf("dir", fullPath);
-		return existsOutput != null && existsOutput.contains("1 item");
+		return existsOutput != null && existsOutput.contains(" item(s)");
 	}
 
     private static boolean tfInPendingChanges(String fullPath) {
         String pendingOutput = tf("status", fullPath);
-        return pendingOutput !=  null && pendingOutput.contains("1 change");
+        return pendingOutput !=  null && pendingOutput.contains("1 change(s)");
     }
 
 	private static String tf(String command, String path) {
