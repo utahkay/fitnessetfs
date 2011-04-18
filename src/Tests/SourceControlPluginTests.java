@@ -29,6 +29,7 @@ public class SourceControlPluginTests {
         SourceControlPlugin.setTfRunner(fakeTfRunner);
         SourceControlPlugin.setFileSystem(fakeFileSystem);
         SourceControlPlugin.setOutputter(fakeOutputter);
+        SourceControlPlugin.setLastEditedFile("");
 	}
 
 	@Test
@@ -84,26 +85,21 @@ public class SourceControlPluginTests {
         verify(fakeTfRunner).execute("checkout", EXPECTED_OUTPATH);
     }
 
-	@Test
-	public void cmUpdateCallsAddWhenFileDoesNotExist() throws IOException {
-        setFileExists(false);
-
-        SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
+    @Test
+    public void cmUpdateCallsAddWhenFileWasNotJustEdited() throws IOException {
+        // When Fitnesse creates a new file, it does not call Edit at all.
+        // It creates the file first, then calls Update.
         SourceControlPlugin.cmUpdate(EXPECTED_FILE, PAYLOAD);
-
         verify(fakeTfRunner).execute("add", EXPECTED_OUTPATH);
     }
-
+	
     @Test
-	public void cmUpdateDoesNothingWhenFileExists() throws IOException {
-        setFileExists(true);
-
+	public void cmUpdateDoesNothingWhenFileWasJustEdited() throws IOException {
         SourceControlPlugin.cmEdit(EXPECTED_FILE, PAYLOAD);
         SourceControlPlugin.cmUpdate(EXPECTED_FILE, PAYLOAD);
-
         verify(fakeTfRunner, never()).execute(eq("add"), anyString());
 	}
-	
+
 	@Test
 	public void cmDeleteCallsDeleteWhenFileExistsInTfs() throws IOException	{
         setFileExistsInTfs(true);

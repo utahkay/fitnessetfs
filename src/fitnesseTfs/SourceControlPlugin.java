@@ -13,6 +13,8 @@ public class SourceControlPlugin {
 	 */
 
 	private static String rootPath = "";
+    private static String lastEditedFile = "";
+
 	private static TfRunner tfRunner = new TfRunner();
     private static FileSystem fileSystem = new FileSystem();
     private static ConsoleOutputter outputter = new ConsoleOutputter();
@@ -29,6 +31,10 @@ public class SourceControlPlugin {
         SourceControlPlugin.outputter = outputter;
     }
 
+    public static void setLastEditedFile(String file) {
+        lastEditedFile = file;
+    }
+
 	public static void cmEdit(String file, String payload) {
         outputter.output("cmEdit");
 		parsePayload(payload);
@@ -36,15 +42,17 @@ public class SourceControlPlugin {
 		if (fileSystem.fileExists(fullPath) && !fileSystem.isWritable(fullPath))
 			tf("checkout", fullPath);
         outputter.output("");
+        setLastEditedFile(file);
 	}
 
     public static void cmUpdate(String file, String payload) throws IOException {
         outputter.output("cmUpdate");
         parsePayload(payload);
         String fullPath = buildPath(payload, file);
-        if (!fileSystem.fileExists(fullPath))
+        if (!file.equals(lastEditedFile))
             tf("add", fullPath);
         outputter.output("");
+        setLastEditedFile("");
     }
 
 	public static void cmPreDelete(String file, String payload) throws IOException {
