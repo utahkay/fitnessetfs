@@ -3,7 +3,7 @@ package fitnesseTfs;
 import java.io.File;
 
 public class FileSystem {
-    ConsoleOutputter outputter;
+    ConsoleOutputter outputter = new ConsoleOutputter();
 
     public boolean fileExists(String path) {
         if (outputter != null)

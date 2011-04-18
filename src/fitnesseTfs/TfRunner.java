@@ -7,7 +7,7 @@ import java.io.InputStreamReader;
 public class TfRunner {
 	
 	private String path;
-    private ConsoleOutputter outputter;
+    private ConsoleOutputter outputter = new ConsoleOutputter();
 
 	public void setPathToTfCommand(String path) {
 		this.path = path;
