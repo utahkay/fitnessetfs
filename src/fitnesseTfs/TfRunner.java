@@ -18,8 +18,9 @@ public class TfRunner {
     }
 
 	public String execute(String option, String file) {
-        outputter.output("tf.exe " + option + " " + file);
-		String result = execute(path + "tf.exe " + option + " /noprompt " + file);
+        String command = path + "tf.exe " + option + " /noprompt " + file;
+        outputter.output(command);
+		String result = execute(command);
         outputter.output(result);
         return result;
 	}
