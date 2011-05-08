@@ -1,6 +1,7 @@
 package fitnesseTfs;
 
 import java.io.IOException;
+import java.io.Console;
 import java.util.List;
 
 public class SourceControlPlugin {
@@ -93,6 +94,7 @@ public class SourceControlPlugin {
 
     private static boolean tfInPendingChanges(String fullPath) {
         String pendingOutput = tf("status /recursive", fullPath);
+        System.out.println(pendingOutput);
         return pendingOutput !=  null && pendingOutput.contains(" change(s)");
     }
 
