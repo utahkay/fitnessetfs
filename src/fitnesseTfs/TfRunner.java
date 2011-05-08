@@ -1,9 +1,5 @@
 package fitnesseTfs;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 public class TfRunner {
 	
 	private String path;
@@ -25,34 +21,25 @@ public class TfRunner {
         return result;
 	}
 	
-	private static String execute(String command) {
-		String result;
-		Process process;
-		try {
-			process = Runtime.getRuntime().exec(command);
-			try {
-				process.waitFor();
-				result = getOutput(process);
-			} catch (InterruptedException e) {
-				result = "Error: " + e.getMessage();
-			}
-		} catch (IOException e1) {
-			result = "Error: " + e1.getMessage();
-		}
+    private static String execute(String command) {
+        String result = "";
 
-		return result;
-	}
+        try {
+            Process process = Runtime.getRuntime().exec(command);
 
-	private static String getOutput(Process process) throws IOException {
-		String result = "";
-		String line;
-		BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-		while ((line = input.readLine()) != null) {
-			result += line + "\n";
-		}
-		input.close();
-		return result;
-	}
+            StreamGobbler errorGobbler = new StreamGobbler(process.getErrorStream());
+            StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream());
+
+            errorGobbler.start();
+            outputGobbler.start();
+            
+            process.waitFor();
+            result = outputGobbler.getOutput();
+        } catch (Throwable t) {
+            t.printStackTrace();
+        }
+        return result;
+    }
 
     public void setOutput(boolean output) {
         if (outputter != null)
